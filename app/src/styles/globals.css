@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  --rose: #c9897a;
+  --blush: #f0d9d0;
+  --cream: #faf6f3;
+  --mocha: #4a2e26;
+  --sand: #e8d5c4;
+  --warm: #8b5e52;
+}
+
+@theme {
+  --color-rose: #c9897a;
+  --color-blush: #f0d9d0;
+  --color-cream: #faf6f3;
+  --color-mocha: #4a2e26;
+  --color-sand: #e8d5c4;
+  --color-warm: #8b5e52;
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-body: 'Jost', sans-serif;
+}
+
+@layer base {
+  body { font-family: var(--font-body); background: var(--color-cream); color: var(--color-mocha); overflow-x: hidden; }
+  html { scroll-behavior: smooth; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-24px); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-fade-in { animation: fadeIn 0.5s ease forwards; }
+.animate-pop-in { animation: popIn 0.5s cubic-bezier(.34,1.56,.64,1); }
+.animate-spin-slow { animation: spin 1s linear infinite; }
+.animate-float { animation: float 8s ease-in-out infinite; }
+.animate-float-delay { animation: float 8s ease-in-out infinite 3s; }
+.animate-marquee { animation: marquee 22s linear infinite; }
+
+.font-heading { font-family: 'Cormorant Garamond', serif; }
+
+/* Splash screen (§12.1) */
+@keyframes splash-blink { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(1.04); } }
+@keyframes splash-bar   { from { width: 0% } to { width: 100% } }
+.animate-splash-blink { animation: splash-blink 1.4s ease-in-out infinite; }
+.animate-splash-bar   { animation: splash-bar 1.8s linear forwards; }
+@media (prefers-reduced-motion: reduce) { .animate-splash-blink { animation: none; } }
+
+/* Scroll-reveal (ported verbatim from live index.html .reveal/.visible) */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.75s ease, transform 0.75s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
