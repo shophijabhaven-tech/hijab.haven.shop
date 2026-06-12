@@ -49,8 +49,10 @@ export default function Splash() {
       aria-label="Loading Hijab Haven"
       className={`fixed inset-0 z-[10001] bg-gradient-to-br from-mocha to-warm flex flex-col items-center justify-center p-4 transition-opacity duration-[400ms] ${fading ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
     >
-      <div className="w-[110px] h-[110px] rounded-full overflow-hidden border-4 border-white/30 shadow-[0_8px_30px_rgba(0,0,0,0.25)] animate-splash-blink">
-        <img src="/images/logo.jpg" alt="" className="w-full h-full object-cover block" />
+      {/* Full emblem incl. script text (owner directive A): contain at 84%
+          over the artwork's own cream so nothing is cropped by the ring. */}
+      <div className="w-[132px] h-[132px] rounded-full overflow-hidden border-4 border-white/30 shadow-[0_8px_30px_rgba(0,0,0,0.25)] animate-splash-blink bg-[#f7e8dc] flex items-center justify-center">
+        <img src="/images/logo.jpg" alt="" className="w-[84%] h-[84%] object-contain block" />
       </div>
       <div className="font-heading text-[2rem] text-white font-normal mt-5">Hijab Haven</div>
       <div className="w-[180px] h-[3px] rounded-full bg-white/20 overflow-hidden mt-6">

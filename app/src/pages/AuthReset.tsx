@@ -64,8 +64,10 @@ export default function AuthReset() {
       <div className="bg-white rounded-2xl overflow-hidden max-w-[400px] w-full shadow-[0_24px_70px_rgba(74,46,38,0.18)] border border-sand animate-pop-in">
         {/* Brand header — same gate-style framing as /auth */}
         <div className="bg-gradient-to-br from-mocha to-warm px-6 py-8 text-center">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/30 mx-auto mb-4 shadow-[0_8px_30px_rgba(0,0,0,.25)]">
-            <img src="/images/logo.jpg" alt="Hijab Haven" className="w-full h-full object-cover" />
+          {/* Full emblem incl. script text (owner directive A): contain at 84%
+              over the artwork's own cream so nothing is cropped by the ring. */}
+          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white/30 mx-auto mb-4 shadow-[0_8px_30px_rgba(0,0,0,.25)] bg-[#f7e8dc] flex items-center justify-center">
+            <img src="/images/logo.jpg" alt="Hijab Haven" className="w-[84%] h-[84%] object-contain" />
           </div>
           <h1 className="font-heading text-3xl text-white font-normal">Hijab Haven</h1>
           <p className="text-xs text-white/60 tracking-[0.18em] uppercase mt-1">

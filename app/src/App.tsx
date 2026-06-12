@@ -2,7 +2,6 @@ import { Suspense, lazy } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import CartDrawer from '@/components/CartDrawer'
 import Footer from '@/components/Footer'
-import Gate from '@/components/Gate'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import Navbar from '@/components/Navbar'
 import Splash from '@/components/Splash'
@@ -31,14 +30,15 @@ const Broadcast = lazy(() => import('@/pages/admin/Broadcast'))
 const Customers = lazy(() => import('@/pages/admin/Customers'))
 const Dashboard = lazy(() => import('@/pages/admin/Dashboard'))
 
-// Customer chrome: Splash overlay + Gate overlay slot + Navbar + page + Footer
-// + CartDrawer. Splash is first so it sits above the gate (§12.1); neither ever
-// renders on /admin/* because admin routes use AdminLayout (§3.1).
+// Customer chrome: Splash overlay + Navbar + page + Footer + CartDrawer.
+// The entry gate is retired (owner directive, supersedes §12.1/§12.2): the
+// splash plays once per session, then visitors go straight into the shop.
+// New-customer data collection now lives in the /auth signup form. Splash
+// never renders on /admin/* because admin routes use AdminLayout (§3.1).
 function CustomerLayout() {
   return (
     <>
       <Splash />
-      <Gate />
       <Navbar />
       <main className="min-h-screen">
         <Outlet />

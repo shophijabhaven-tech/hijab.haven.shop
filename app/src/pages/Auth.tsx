@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useAuth } from '@/context/AuthContext'
-import { upsertMyProfile } from '@/lib/queries'
+import { registerCustomerV2, upsertMyProfile } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 
 // Single login surface for everyone — customers AND admins. Owner directive
@@ -41,6 +41,10 @@ export default function Auth() {
 
   const [mode, setMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
+  // Signup-only fields — the retired entry gate's data collection now lives
+  // here (owner directive, supersedes §12.2).
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -96,6 +100,19 @@ export default function Auth() {
 
   async function signUp() {
     if (loading) return
+    // Validation order mirrors the retired gate (name → phone) then the
+    // existing email/password rules. Phone rule is the gate's, verbatim:
+    // valid when ≥10 digits remain after stripping non-digits.
+    const trimmedName = fullName.trim()
+    const trimmedPhone = phone.trim()
+    if (!trimmedName) {
+      setError('Please enter your name')
+      return
+    }
+    if (trimmedPhone.replace(/\D/g, '').length < 10) {
+      setError('Please enter a valid 10-digit WhatsApp number')
+      return
+    }
     if (!email || !email.includes('@')) {
       setError('Please enter a valid email address')
       return
@@ -123,12 +140,32 @@ export default function Auth() {
       setError(friendlyAuthError(signUpError))
       return
     }
+    // The retired gate's job, now done at signup: populate the customers
+    // table (broadcast list) fire-and-forget — Supabase failures must never
+    // block the signup (§9.4) — and store hh_user for checkout prefill.
+    registerCustomerV2(trimmedName, trimmedPhone, email).catch(() => {})
+    localStorage.setItem(
+      'hh_user',
+      JSON.stringify({
+        name: trimmedName,
+        phone: trimmedPhone,
+        email,
+        joinedDate: new Date().toLocaleDateString('en-IN'),
+        joinedTs: Date.now(),
+      }),
+    )
     if (data.session) {
-      // Autoconfirm ON: session is live. Create the profile row (§5.3);
-      // failure must not block the session — degrade like AuthContext (§9).
+      // Autoconfirm ON: session is live. Create the profile row (§5.3) with
+      // the signup's name + phone; failure must not block the session —
+      // degrade like AuthContext (§9).
       if (data.user) {
         try {
-          await upsertMyProfile({ id: data.user.id, email: data.user.email ?? null })
+          await upsertMyProfile({
+            id: data.user.id,
+            email: data.user.email ?? null,
+            full_name: trimmedName,
+            phone: trimmedPhone,
+          })
         } catch (profileError) {
           console.error('Profile upsert after sign-up failed:', profileError)
         }
@@ -220,11 +257,14 @@ export default function Auth() {
     setError('')
   }
 
-  // Mode switches keep the email (prefill) but clear passwords, codes and messages.
+  // Mode switches keep the email (prefill) but clear the signup fields,
+  // passwords, codes and messages.
   function switchMode(nextMode: AuthMode) {
     setMode(nextMode)
     setStep('email')
     setOtp('')
+    setFullName('')
+    setPhone('')
     setPassword('')
     setConfirmPassword('')
     setError('')
@@ -236,8 +276,10 @@ export default function Auth() {
       <div className="bg-white rounded-2xl overflow-hidden max-w-[400px] w-full shadow-[0_24px_70px_rgba(74,46,38,0.18)] border border-sand animate-pop-in">
         {/* Brand header — gate-style framing */}
         <div className="bg-gradient-to-br from-mocha to-warm px-6 py-8 text-center">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/30 mx-auto mb-4 shadow-[0_8px_30px_rgba(0,0,0,.25)]">
-            <img src="/images/logo.jpg" alt="Hijab Haven" className="w-full h-full object-cover" />
+          {/* Full emblem incl. script text (owner directive A): contain at 84%
+              over the artwork's own cream so nothing is cropped by the ring. */}
+          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white/30 mx-auto mb-4 shadow-[0_8px_30px_rgba(0,0,0,.25)] bg-[#f7e8dc] flex items-center justify-center">
+            <img src="/images/logo.jpg" alt="Hijab Haven" className="w-[84%] h-[84%] object-contain" />
           </div>
           <h1 className="font-heading text-3xl text-white font-normal">Hijab Haven</h1>
           <p className="text-xs text-white/60 tracking-[0.18em] uppercase mt-1">
@@ -298,6 +340,29 @@ export default function Auth() {
             </>
           ) : mode === 'signup' ? (
             <>
+              <div className="mb-4">
+                <label className={labelClass}>Your Name</label>
+                <input
+                  type="text"
+                  autoComplete="name"
+                  value={fullName}
+                  onChange={event => setFullName(event.target.value)}
+                  placeholder="e.g. Fatima Shaikh"
+                  className={inputClass}
+                />
+              </div>
+              <div className="mb-4">
+                <label className={labelClass}>WhatsApp Number</label>
+                <input
+                  type="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={event => setPhone(event.target.value)}
+                  placeholder="e.g. 9876543210"
+                  maxLength={15}
+                  className={inputClass}
+                />
+              </div>
               <div className="mb-4">
                 <label className={labelClass}>Email Address</label>
                 <input

@@ -183,8 +183,10 @@ export default function Home() {
         </div>
 
         <div className="relative z-[2] flex flex-col items-center gap-[0.8rem]">
-          <div className="w-[220px] h-[220px] max-md:w-40 max-md:h-40 max-[380px]:w-[130px] max-[380px]:h-[130px] rounded-full overflow-hidden border-[5px] border-rose shadow-[0_20px_60px_rgba(201,137,122,0.35)]">
-            <img src="/images/logo.jpg" alt="Hijab Haven" className="w-full h-full object-cover block" />
+          {/* Full emblem incl. script text (owner directive A): contain at 84%
+              over the artwork's own cream so nothing is cropped by the ring. */}
+          <div className="w-[264px] h-[264px] max-md:w-48 max-md:h-48 max-[380px]:w-[156px] max-[380px]:h-[156px] rounded-full overflow-hidden border-[5px] border-rose shadow-[0_20px_60px_rgba(201,137,122,0.35)] bg-[#f7e8dc] flex items-center justify-center">
+            <img src="/images/logo.jpg" alt="Hijab Haven" className="w-[84%] h-[84%] object-contain block" />
           </div>
           <div className="font-heading text-[2.2rem] max-md:text-[1.7rem] font-semibold text-mocha text-center">
             Hijab Haven

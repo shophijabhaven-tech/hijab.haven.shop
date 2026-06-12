@@ -42,8 +42,10 @@ export default function AdminLayout() {
 
   const brandLink = (
     <Link to="/" className="flex items-center gap-2.5 no-underline">
-      <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-rose shrink-0">
-        <img src="/images/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+      {/* Full emblem incl. script text (owner directive A): contain at 84%
+          over the artwork's own cream so nothing is cropped by the ring. */}
+      <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-rose shrink-0 bg-[#f7e8dc] flex items-center justify-center">
+        <img src="/images/logo.jpg" alt="Logo" className="w-[84%] h-[84%] object-contain" />
       </div>
       <span className="font-heading text-lg text-blush">Hijab Haven</span>
     </Link>

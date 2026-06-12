@@ -7,7 +7,7 @@ import { useCart } from '@/context/CartContext'
 // Links per §7 as amended by §12.8: Home, Shop, Hampers (/#hampers) —
 // the Payment (/#payment) link is removed with the Home #payment section.
 export default function Navbar() {
-  const { user, isAdmin } = useAuth()
+  const { user } = useAuth()
   const { cartCount, openCart } = useCart()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -21,8 +21,10 @@ export default function Navbar() {
     <>
       <nav className="fixed top-0 left-0 right-0 z-[500] flex items-center justify-between px-[4%] py-3 bg-cream/[.93] backdrop-blur-[14px] border-b border-rose/[.18]">
         <Link to="/" className="flex items-center gap-3 no-underline">
-          <div className="w-11 h-11 rounded-full overflow-hidden border-[2.5px] border-rose shrink-0">
-            <img src="/images/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+          {/* Full emblem incl. script text (owner directive A): contain at 84%
+              over the artwork's own cream so nothing is cropped by the ring. */}
+          <div className="w-[52px] h-[52px] rounded-full overflow-hidden border-[2.5px] border-rose shrink-0 bg-[#f7e8dc] flex items-center justify-center">
+            <img src="/images/logo.jpg" alt="Logo" className="w-[84%] h-[84%] object-contain" />
           </div>
           <span className="font-heading text-xl font-semibold text-mocha">Hijab Haven</span>
         </Link>
@@ -54,13 +56,14 @@ export default function Navbar() {
           </button>
 
           {user ? (
-            // Role-aware button per §12.3: admins get "⚙ Owner Panel" → /admin
-            // (same single button as V1, relabeled); customers get Account.
+            // Owner directive C: no admin entry points in the customer UI —
+            // everyone signed in gets Account. Admins reach /admin via the
+            // post-login redirect on /auth or by typing the URL.
             <Link
-              to={isAdmin ? '/admin' : '/account'}
+              to="/account"
               className="bg-mocha text-blush border-none px-3 py-1.5 text-xs tracking-[0.1em] uppercase rounded hover:bg-warm transition-colors no-underline cursor-pointer"
             >
-              {isAdmin ? '⚙ Owner Panel' : '👤 Account'}
+              👤 Account
             </Link>
           ) : (
             <Link
@@ -102,15 +105,6 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          {isAdmin && (
-            <Link
-              to="/admin"
-              onClick={() => setMobileOpen(false)}
-              className="no-underline text-mocha text-xl tracking-[0.15em] uppercase font-medium px-8 py-3 rounded-md hover:bg-blush hover:text-rose transition-all"
-            >
-              ⚙ Owner Panel
-            </Link>
-          )}
         </div>
       )}
     </>
