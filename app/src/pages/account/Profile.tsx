@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import ErrorBlock from '@/components/ErrorBlock'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -7,6 +8,7 @@ import { useToast } from '@/context/ToastContext'
 import {
   addAddress,
   deleteAddress,
+  deleteMyAccount,
   fetchMyAddresses,
   fetchMyProfile,
   updateAddress,
@@ -36,8 +38,9 @@ const EMPTY_ADDRESS: AddressInput = {
 }
 
 export default function Profile() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const { showToast } = useToast()
+  const navigate = useNavigate()
 
   // ── Profile form ──
   const [fullName, setFullName] = useState('')
@@ -58,6 +61,11 @@ export default function Profile() {
   const [formError, setFormError] = useState('')
   const [formBusy, setFormBusy] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Address | null>(null)
+
+  // ── Danger zone (self-service account deletion) ──
+  const [confirmingAccountDelete, setConfirmingAccountDelete] = useState(false)
+  const [accountDeleteBusy, setAccountDeleteBusy] = useState(false)
+  const [accountDeleteError, setAccountDeleteError] = useState('')
 
   // ── Password (set/change — lets OTP-born users adopt a password) ──
   const [newPassword, setNewPassword] = useState('')
@@ -223,6 +231,40 @@ export default function Profile() {
     setNewPassword('')
     setConfirmNewPassword('')
     showToast('Password updated — you can now sign in with it.', 'success')
+  }
+
+  async function confirmAccountDelete() {
+    if (accountDeleteBusy) return
+    setConfirmingAccountDelete(false)
+    setAccountDeleteBusy(true)
+    setAccountDeleteError('')
+    try {
+      await deleteMyAccount()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ''
+      setAccountDeleteError(
+        message.includes('ADMIN_ACCOUNT')
+          ? "Admin accounts can't be deleted here — remove the admin role first (Owner Panel → Admins)."
+          : "Couldn't delete your account — please try again or contact us on WhatsApp."
+      )
+      setAccountDeleteBusy(false)
+      return
+    }
+    // Server-side user is gone — clean up device state. 'hh_cart' stays (device cart).
+    try {
+      localStorage.removeItem('hh_user')
+      localStorage.removeItem('hh_wishlist')
+    } catch {
+      // localStorage may be blocked — cleanup is best-effort.
+    }
+    try {
+      await signOut()
+    } catch {
+      // The auth user no longer exists, so the server call can fail —
+      // supabase-js clears the local session regardless. Swallow it.
+    }
+    showToast('Your account has been deleted. Take care 🌸', 'success')
+    navigate('/', { replace: true })
   }
 
   async function confirmDelete() {
@@ -468,6 +510,23 @@ export default function Profile() {
         </>
       )}
 
+      {/* ── Danger zone ── */}
+      <div className="bg-white rounded-md p-4 mt-10 border-[1.5px] border-rose/40 space-y-3">
+        <h2 className={labelClass}>Delete Account</h2>
+        <p className="text-xs text-warm">
+          Permanently delete your account, profile, saved addresses, and wishlist. Past orders
+          stay in the shop&apos;s records as anonymous guest orders. This cannot be undone.
+        </p>
+        {accountDeleteError && <p className="text-rose text-xs">{accountDeleteError}</p>}
+        <button
+          onClick={() => setConfirmingAccountDelete(true)}
+          disabled={accountDeleteBusy}
+          className="bg-transparent border border-rose text-rose px-6 py-2.5 text-xs tracking-[0.14em] uppercase rounded-md cursor-pointer hover:bg-rose hover:text-white transition-colors disabled:opacity-50"
+        >
+          {accountDeleteBusy ? 'Deleting...' : 'Delete my account'}
+        </button>
+      </div>
+
       <ConfirmDialog
         open={pendingDelete !== null}
         title="Delete address?"
@@ -475,6 +534,15 @@ export default function Profile() {
         confirmLabel="Delete"
         onConfirm={() => void confirmDelete()}
         onCancel={() => setPendingDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmingAccountDelete}
+        title="Delete your account?"
+        message="This permanently removes your profile, addresses, and wishlist. It cannot be undone."
+        confirmLabel="Delete forever"
+        onConfirm={() => void confirmAccountDelete()}
+        onCancel={() => setConfirmingAccountDelete(false)}
       />
     </div>
   )

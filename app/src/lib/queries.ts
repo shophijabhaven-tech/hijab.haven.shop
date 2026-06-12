@@ -607,6 +607,20 @@ export async function deleteAddress(id: number): Promise<void> {
   if (error) throw new Error(`Failed to delete address: ${error.message}`)
 }
 
+// ── Account deletion (self-service) ───────────────────────────
+
+/**
+ * RPC delete_my_account: deletes the caller's auth user (cascades profile,
+ * addresses, wishlist), removes their customers gate/broadcast record, and
+ * preserves past orders as anonymous guest records (orders.user_id → NULL).
+ * Throws the raw RPC message (AUTH_REQUIRED | ADMIN_ACCOUNT) — the caller
+ * maps it to friendly copy.
+ */
+export async function deleteMyAccount(): Promise<void> {
+  const { error } = await supabase.rpc('delete_my_account')
+  if (error) throw new Error(error.message)
+}
+
 // ── Wishlist ──────────────────────────────────────────────────
 
 export async function fetchWishlistProductIds(userId: string): Promise<number[]> {
