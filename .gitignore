@@ -1,0 +1,13 @@
+# Dependencies and build output — never commit, anywhere in the tree
+node_modules/
+dist/
+
+# Local environment file (lives only on this machine and in Netlify settings)
+.env.local
+
+# (Legacy "App Build/" and "hijab-haven-app/" folders were deleted in the
+# 12 Jun 2026 cleanup; the original single-file site is archived — and
+# version-controlled — in "original V1/")
+
+# Machine-specific Claude Code settings
+.claude/settings.local.json
