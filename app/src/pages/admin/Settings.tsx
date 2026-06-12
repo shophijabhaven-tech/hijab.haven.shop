@@ -3,6 +3,7 @@ import ErrorBlock from '@/components/ErrorBlock'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useToast } from '@/context/ToastContext'
 import { fetchShopSettings, updateShopSettings, uploadSettingsQr } from '@/lib/queries'
+import { supabase } from '@/lib/supabase'
 import type { ShopSettings } from '@/lib/supabase'
 
 const inputClasses =
@@ -38,6 +39,12 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingQr, setIsUploadingQr] = useState(false)
   const qrInputRef = useRef<HTMLInputElement>(null)
+
+  // ── Change my password (mirrors Profile.tsx's Set Password card) ──
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [passwordBusy, setPasswordBusy] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
 
   // Lint-safe fetch pattern (Dashboard idiom): the effect only invokes load;
   // all setState happens in the async settle callbacks. Pre-002 the table
@@ -136,6 +143,31 @@ export default function Settings() {
       setIsUploadingQr(false)
       if (qrInputRef.current) qrInputRef.current.value = ''
     }
+  }
+
+  async function savePassword() {
+    if (passwordBusy) return
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters.')
+      return
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('Passwords do not match.')
+      return
+    }
+    setPasswordBusy(true)
+    setPasswordError('')
+    // Supabase updates the password on the current session — no current
+    // password required.
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setPasswordBusy(false)
+    if (error) {
+      setPasswordError(error.message)
+      return
+    }
+    setNewPassword('')
+    setConfirmNewPassword('')
+    showToast('Password updated — you can now sign in with it.', 'success')
   }
 
   if (isLoading) return <LoadingSpinner />
@@ -246,6 +278,48 @@ export default function Settings() {
             <p className="text-xs text-warm mt-1.5">JPEG, PNG, WebP, or GIF — 5 MB max.</p>
           </div>
         </div>
+      </div>
+
+      {/* ── Change my password (same flow as the account page's Set Password) ── */}
+      <div className="bg-white rounded-lg p-5 md:p-6 max-w-2xl mt-8">
+        <h2 className="font-heading text-xl text-mocha mb-4">Change my password</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label htmlFor="settings-new-password" className={labelClasses}>
+              New password (min 8 characters)
+            </label>
+            <input
+              id="settings-new-password"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={event => setNewPassword(event.target.value)}
+              className={inputClasses}
+            />
+          </div>
+          <div>
+            <label htmlFor="settings-confirm-password" className={labelClasses}>
+              Confirm password
+            </label>
+            <input
+              id="settings-confirm-password"
+              type="password"
+              autoComplete="new-password"
+              value={confirmNewPassword}
+              onChange={event => setConfirmNewPassword(event.target.value)}
+              className={inputClasses}
+            />
+          </div>
+        </div>
+        {passwordError && <p className="text-rose text-xs mb-3">{passwordError}</p>}
+        <button
+          onClick={() => void savePassword()}
+          disabled={passwordBusy}
+          className="bg-rose text-white border-none px-7 py-2.5 text-xs tracking-[0.15em] uppercase rounded cursor-pointer hover:bg-mocha transition-colors disabled:opacity-60 disabled:cursor-default"
+        >
+          {passwordBusy ? 'Saving…' : 'Update password'}
+        </button>
       </div>
     </div>
   )

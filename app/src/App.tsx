@@ -9,6 +9,7 @@ import Splash from '@/components/Splash'
 import RequireAdmin from '@/components/guards/RequireAdmin'
 import RequireAuth from '@/components/guards/RequireAuth'
 import Auth from '@/pages/Auth'
+import AuthReset from '@/pages/AuthReset'
 import Checkout from '@/pages/Checkout'
 import Home from '@/pages/Home'
 import NotFound from '@/pages/NotFound'
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="/product/:id" element={<Product />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/reset" element={<AuthReset />} />
         <Route element={<RequireAuth />}>
           <Route path="/account" element={<AccountLayout />}>
             <Route index element={<Profile />} />

@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 // signup creates password accounts. No is_admin gating at sign-in time: the
 // role decides the view after login, not the surface.
 
-type AuthMode = 'signin' | 'signup' | 'otp'
+type AuthMode = 'signin' | 'signup' | 'otp' | 'forgot'
 
 const RESEND_COOLDOWN_S = 30
 const MIN_PASSWORD_LENGTH = 8
@@ -192,6 +192,28 @@ export default function Auth() {
     // `user`, at which point the declarative branch above takes over.
   }
 
+  async function sendResetLink() {
+    if (loading) return
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address')
+      return
+    }
+    setLoading(true)
+    setError('')
+    setNotice('')
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/auth/reset',
+    })
+    setLoading(false)
+    if (resetError) {
+      setError(friendlyAuthError(resetError))
+      return
+    }
+    // Deliberately non-revealing: the same notice whether or not the account
+    // exists, so the form can't be used to probe for registered emails.
+    setNotice(`If an account exists for ${email}, a reset link is on its way — check your inbox.`)
+  }
+
   function resetToEmailStep() {
     setStep('email')
     setOtp('')
@@ -229,9 +251,11 @@ export default function Auth() {
               ? 'Welcome back — sign in with your email and password.'
               : mode === 'signup'
                 ? 'Create your account to start shopping.'
-                : step === 'email'
-                  ? "We'll send a sign-in code to your email."
-                  : `Enter the 6-digit code sent to ${email}`}
+                : mode === 'forgot'
+                  ? "Enter your email and we'll send you a password reset link."
+                  : step === 'email'
+                    ? "We'll send a sign-in code to your email."
+                    : `Enter the 6-digit code sent to ${email}`}
           </p>
 
           {mode === 'signin' ? (
@@ -265,8 +289,11 @@ export default function Auth() {
               <button onClick={() => switchMode('signup')} className={linkButtonClass}>
                 New here? Create an account
               </button>
+              <button onClick={() => switchMode('forgot')} className={`${linkButtonClass} mt-2`}>
+                Forgot password?
+              </button>
               <button onClick={() => switchMode('otp')} className={`${linkButtonClass} mt-2 text-warm/70`}>
-                Forgot password / prefer a code? Email me a sign-in code
+                Prefer a code? Email me a sign-in code
               </button>
             </>
           ) : mode === 'signup' ? (
@@ -310,6 +337,31 @@ export default function Auth() {
               </button>
               <button onClick={() => switchMode('signin')} className={linkButtonClass}>
                 Already have an account? Sign in
+              </button>
+            </>
+          ) : mode === 'forgot' ? (
+            <>
+              <div className="mb-4">
+                <label className={labelClass}>Email Address</label>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
+                  onKeyDown={event => event.key === 'Enter' && void sendResetLink()}
+                  placeholder="your@email.com"
+                  className={inputClass}
+                />
+              </div>
+              <button
+                onClick={() => void sendResetLink()}
+                disabled={loading}
+                className={primaryButtonClass}
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+              <button onClick={() => switchMode('signin')} className={linkButtonClass}>
+                ← Back to sign in
               </button>
             </>
           ) : step === 'email' ? (

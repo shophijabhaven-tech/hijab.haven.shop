@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useToast } from '@/context/ToastContext'
 import { formatDate } from '@/lib/format'
 import { addAdminUser, fetchAdminUsers, removeAdminUser, updateAdminRole } from '@/lib/queries'
+import { supabase } from '@/lib/supabase'
 import type { AdminRole, AdminUser } from '@/lib/supabase'
 
 const inputClasses =
@@ -29,7 +30,8 @@ function RoleBadge({ role }: { role: AdminRole }) {
 }
 
 // /admin/admins per §3.2/§5.4: super_admin gets full management; plain admin
-// gets a read-only list with a notice. The adminRole check here is UX only —
+// gets a read-only list with a notice (plus the send-password-reset action,
+// which only emails a link — no data mutation). The adminRole check here is UX only —
 // RLS on admin_users is the real boundary, so even a forced render of the
 // management UI cannot write anything without a super_admin session.
 export default function Admins() {
@@ -120,6 +122,21 @@ export default function Admins() {
     }
   }
 
+  // Any admin may send this — it only emails a recovery link; the recipient
+  // still has to open their inbox to act on it.
+  async function handleSendReset(admin: AdminUser) {
+    setBusyId(admin.id)
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(admin.email, {
+      redirectTo: window.location.origin + '/auth/reset',
+    })
+    setBusyId(null)
+    if (resetError) {
+      showToast(resetError.message, 'error')
+      return
+    }
+    showToast(`Reset link sent to ${admin.email}`, 'success')
+  }
+
   async function handleRemove() {
     if (!pendingRemove) return
     const target = pendingRemove
@@ -160,11 +177,9 @@ export default function Admins() {
                 <th className="px-4 py-3 font-normal">Name</th>
                 <th className="px-4 py-3 font-normal">Role</th>
                 <th className="px-4 py-3 font-normal">Added</th>
-                {isSuperAdmin && (
-                  <th className="px-4 py-3 font-normal">
-                    <span className="sr-only">Actions</span>
-                  </th>
-                )}
+                <th className="px-4 py-3 font-normal">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -182,25 +197,34 @@ export default function Admins() {
                       <RoleBadge role={admin.role} />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">{formatDate(admin.created_at)}</td>
-                    {isSuperAdmin && (
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => void handleToggleRole(admin)}
-                          disabled={isBusy}
-                          className="bg-transparent border border-sand text-warm px-3 py-1.5 text-[0.65rem] tracking-[0.12em] uppercase rounded cursor-pointer hover:bg-sand/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mr-2"
-                        >
-                          {admin.role === 'super_admin' ? 'Make admin' : 'Make super admin'}
-                        </button>
-                        <button
-                          onClick={() => setPendingRemove(admin)}
-                          disabled={isSelf || isBusy}
-                          title={isSelf ? 'You cannot remove your own account' : undefined}
-                          className="bg-transparent border border-rose text-rose px-3 py-1.5 text-[0.65rem] tracking-[0.12em] uppercase rounded cursor-pointer hover:bg-rose hover:text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-rose"
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    )}
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => void handleSendReset(admin)}
+                        disabled={isBusy}
+                        className="bg-transparent border border-sand text-warm px-3 py-1.5 text-[0.65rem] tracking-[0.12em] uppercase rounded cursor-pointer hover:bg-sand/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        Send password reset
+                      </button>
+                      {isSuperAdmin && (
+                        <>
+                          <button
+                            onClick={() => void handleToggleRole(admin)}
+                            disabled={isBusy}
+                            className="bg-transparent border border-sand text-warm px-3 py-1.5 text-[0.65rem] tracking-[0.12em] uppercase rounded cursor-pointer hover:bg-sand/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ml-2 mr-2"
+                          >
+                            {admin.role === 'super_admin' ? 'Make admin' : 'Make super admin'}
+                          </button>
+                          <button
+                            onClick={() => setPendingRemove(admin)}
+                            disabled={isSelf || isBusy}
+                            title={isSelf ? 'You cannot remove your own account' : undefined}
+                            className="bg-transparent border border-rose text-rose px-3 py-1.5 text-[0.65rem] tracking-[0.12em] uppercase rounded cursor-pointer hover:bg-rose hover:text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-rose"
+                          >
+                            Remove
+                          </button>
+                        </>
+                      )}
+                    </td>
                   </tr>
                 )
               })}
