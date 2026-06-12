@@ -13,6 +13,7 @@ import {
   upsertMyProfile,
 } from '@/lib/queries'
 import type { AddressInput } from '@/lib/queries'
+import { supabase } from '@/lib/supabase'
 import type { Address } from '@/lib/supabase'
 
 // WP-07: profile form (full_name + phone, email read-only) + address book CRUD.
@@ -57,6 +58,12 @@ export default function Profile() {
   const [formError, setFormError] = useState('')
   const [formBusy, setFormBusy] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Address | null>(null)
+
+  // ── Password (set/change — lets OTP-born users adopt a password) ──
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [passwordBusy, setPasswordBusy] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
 
   const userId = user?.id ?? null
 
@@ -193,6 +200,31 @@ export default function Profile() {
     }
   }
 
+  async function savePassword() {
+    if (passwordBusy) return
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters.')
+      return
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('Passwords do not match.')
+      return
+    }
+    setPasswordBusy(true)
+    setPasswordError('')
+    // Supabase updates the password on the current session — no current
+    // password required.
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setPasswordBusy(false)
+    if (error) {
+      setPasswordError(error.message)
+      return
+    }
+    setNewPassword('')
+    setConfirmNewPassword('')
+    showToast('Password updated — you can now sign in with it.', 'success')
+  }
+
   async function confirmDelete() {
     if (!pendingDelete) return
     const target = pendingDelete
@@ -250,6 +282,44 @@ export default function Profile() {
           </button>
         </div>
       )}
+
+      {/* ── Password ── */}
+      <h2 className="font-heading text-2xl text-mocha mb-4">Password</h2>
+      <div className="bg-white rounded-md p-4 mb-10 border border-sand space-y-3">
+        <p className="text-xs text-warm">
+          Set a password to sign in without an email code.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>New Password (min 8 characters)</label>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={event => setNewPassword(event.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Confirm Password</label>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={confirmNewPassword}
+              onChange={event => setConfirmNewPassword(event.target.value)}
+              className={inputClass}
+            />
+          </div>
+        </div>
+        {passwordError && <p className="text-rose text-xs">{passwordError}</p>}
+        <button
+          onClick={() => void savePassword()}
+          disabled={passwordBusy}
+          className="bg-rose text-white px-8 py-3 rounded-md text-xs tracking-[0.14em] uppercase hover:bg-mocha transition-colors cursor-pointer border-none disabled:opacity-50"
+        >
+          {passwordBusy ? 'Saving...' : 'Set Password'}
+        </button>
+      </div>
 
       {/* ── Address book ── */}
       <h2 className="font-heading text-2xl text-mocha mb-4">Address Book</h2>
