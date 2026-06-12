@@ -1,13 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl: string | undefined = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey: string | undefined = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing Supabase configuration: set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in app/.env.local (see .env.example).'
-  )
-}
+// Env vars take precedence; the baked-in values are the production project's
+// PUBLISHABLE credentials (safe to ship — RLS is the security boundary), so a
+// deploy with missing Netlify env vars can never produce a broken site.
+const supabaseUrl: string =
+  import.meta.env.VITE_SUPABASE_URL || 'https://tacjzpobeoxyrdrvazni.supabase.co'
+const supabaseAnonKey: string =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_P3yvDhbFdSmDnxbgTSROrw_1ef6-TA4'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
