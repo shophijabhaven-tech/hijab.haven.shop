@@ -69,18 +69,15 @@ no local secrets file.
       during the remote database setup. Nothing to do.
 
 ## Step 3 — Create the staging site on Netlify
-- [ ] Netlify → **Add new site → Import an existing project → GitHub** →
-      repository `hijab.haven.shop` → branch `rebuild`.
-- [ ] Build settings are auto-read from `netlify.toml` — do not change them.
-- [ ] **Site settings → Environment variables** → add both:
-      ```
-      VITE_SUPABASE_URL=https://tacjzpobeoxyrdrvazni.supabase.co
-      VITE_SUPABASE_ANON_KEY=sb_publishable_P3yvDhbFdSmDnxbgTSROrw_1ef6-TA4
-      ```
-- [ ] Deploy (re-trigger a deploy if the variables were added after the
-      first build). Note the staging URL.
+- [x] **SUPERSEDED 12 Jun 2026** — production cut over directly (Step 5):
+      merging `rebuild` → `main` triggered the connected Netlify site to
+      auto-build the new app. The app ships with baked-in fallback Supabase
+      credentials, so the missing Netlify env vars did not break the build.
+      Optionally still add both `VITE_SUPABASE_*` variables in Site
+      settings → Environment variables (values in `app\.env.example`) as
+      good practice.
 
-## Step 4 — Verify on staging (deferred QA items)
+## Step 4 — Verify (deferred QA items — now ON PRODUCTION)
 - [ ] Owner login round-trip: `/auth` → "Owner? Sign in with password" →
       your email+password → you land in the Owner Panel. (A non-admin
       account signing in lands on the shop as a customer; if it browses to
@@ -93,12 +90,13 @@ no local secrets file.
       1440px (desktop): indistinguishable.
 
 ## Step 5 — Production cutover
-- [ ] Netlify → existing **hijab-haven** production site → connect it to the
-      same repository + `rebuild` branch (settings auto-read from
-      `netlify.toml`) → add the same 2 environment variables → deploy.
-- [ ] **Rollback if needed:** production site → **Deploys** → select the
-      last good pre-cutover deploy → **Publish deploy** (old site back in
-      under a minute). Fix on staging, cut over again.
+- [x] **DONE 12 Jun 2026** — `rebuild` merged into `main` (merge commit
+      `abf1abf`); Netlify auto-built and https://hijab-haven.netlify.app
+      now serves the new app. Verified: all routes 200 (SPA deep links
+      work), fonts/OG tags present, JS bundle + both brand images serving.
+- [ ] **Rollback if ever needed:** Netlify → **Deploys** → select the last
+      pre-cutover deploy → **Publish deploy** (old site back in under a
+      minute). Or `git revert abf1abf` on `main` and push.
 
 ## Step 6 — Post-cutover smoke test (on https://hijab-haven.netlify.app)
 - [ ] Incognito window: splash plays, entry gate appears, accepts
