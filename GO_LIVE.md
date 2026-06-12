@@ -11,16 +11,15 @@ it top to bottom, ticking each box. Details for every step live in:
 
 ## Step 0 — Publish to GitHub (one time, before Netlify can see the code)
 
-This folder is not a git repository yet. From a terminal in
-`C:\Users\ARIF\Desktop\Hijab Haven`, run:
+- [x] **DONE 12 Jun 2026** — repository initialized, the full rebuild
+      committed (77 files), and pushed to the `rebuild` branch of
+      `shophijabhaven-tech/hijab.haven.shop`. `main` (the old live site)
+      is untouched. Future updates from this folder are just:
 
 ```
-git init
-git checkout -b rebuild
 git add .
-git commit -m "Hijab Haven rebuild (Vite SPA + Supabase)"
-git remote add origin https://github.com/shophijabhaven-tech/hijab.haven.shop.git
-git push -u origin rebuild
+git commit -m "describe the change"
+git push
 ```
 
 **Branch strategy (recommended): push to a branch named `rebuild`, not
